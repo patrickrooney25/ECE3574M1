@@ -54,7 +54,7 @@ std::vector<SearchResult> RetrievalEngine::search(const std::string& query,
 
         if (postings_ptr !=nullptr && !postings_ptr->empty()){
             double df = static_cast<double>(index.document_frequency(term));
-            double idf = std::log((N+1.0)/(df+1.0) +1.0);
+            double idf = std::log((N+1.0)/(df+1.0)) +1.0;
 
             const std::vector<CorpusIndex::Posting>& postings_list = *postings_ptr;
             for (std::size_t j=0; j<postings_list.size(); j++){

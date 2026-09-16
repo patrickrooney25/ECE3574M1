@@ -36,19 +36,35 @@ void CorpusIndex::build(const std::vector<Chunk>& chunks) {
 }
 
 std::size_t CorpusIndex::document_frequency(
-    const std::string& normalized_term) const noexcept {
+    const std::string& normalized_term) const {
     // TODO: return how many chunks contain the requested term.
-    auto it =postings_.find(normalized_term);
+    std::vector<std::string> t = TextProcessor::terms(normalized_term);
+    if(t.size()>1){
+        throw std::invalid_argument("multi token terms invalid");
+    }
+    if(t.empty()){
+        return 0;
+    }
+    
+    auto it =postings_.find(t[0]);
     if (it==postings_.end()){
         return 0;
     }
     return it->second.size();
 }
 
-std::size_t CorpusIndex::term_frequency(
+std::size_t CorpusIndex::term_frequency(    
     const std::string& normalized_term,
-    const std::string& chunk_id) const noexcept {
+    const std::string& chunk_id) const {
     // TODO: return the requested term's frequency in the specified chunk.
+    std::vector<std::string> t = TextProcessor::terms(normalized_term);
+    if(t.size()>1){
+        throw std::invalid_argument("multi token terms invalid");
+    }
+    if(t.empty()){
+        return 0;
+    }
+    
     auto chunk_it =chunk_by_id_.find(chunk_id);
     if(chunk_it ==chunk_by_id_.end()){
         return 0;
@@ -56,7 +72,7 @@ std::size_t CorpusIndex::term_frequency(
 
     std::size_t target_chunk_index = chunk_it->second;
 
-    auto posting_it = postings_.find(normalized_term);
+    auto posting_it = postings_.find(t[0]);
     if(posting_it ==postings_.end()){
         return 0;
     }
