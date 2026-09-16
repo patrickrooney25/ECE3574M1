@@ -50,6 +50,7 @@ std::vector<ContextItem> ContextBuilder::build(const std::vector<SearchResult>& 
 
             ContextItem item{};
             item.chunk_id = result.chunk_id;
+            item.document_id = result.document_id;
             item.chunk_sequence = result.chunk_sequence;
             item.text=truncated_text;
             item.token_count = remaining_budget;
