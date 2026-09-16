@@ -1,18 +1,11 @@
 # M1 DESIGN.md
 
-Replace this template with your own concise engineering explanation.
+Milestone 1 breaks down the document search pipeline into six main subsystem components. TextProcessor is a helper class that cleans up the text. It turns everything into lowercase, removes punctuation, handles extra spaces, and splits the text into individual words. The Chunker takes long documents and cuts them into smaller chunk objects using limits like max tokens, overlap, and paragraph size that are defined in ChunkingPolicy. CorpusIndex is the search index. It uses an inverted index map to keep track of which words appear in which chunks, term frequencies, and document frequencies. RetrievalEngin runs search queries using TF-IDF math to score how closely a chunk matches a query, then returns the top results ranked by score. ContextBuilder takes the top search results and combines them into a single context string without going over the max token budget limit. ProcessingCor is the main manager class that ties everything together. It handles adding documents, updating the index, running searches and rebuilding the index when needed.
 
-## 1. System structure
-Describe the major responsibilities in your M1 subsystem and how they interact.
+One of the design decisions I made in this project is storing data directly rather than utilizing pointers. ProcessingCore holds the CorpusIndex and chunk list directly by value instead of using pointers. This keeps the memory simpler, prevents memory leaks, and makes array lookup faster. I also decided to use unordered map for the index. I did this because it gives a fast O(1) lookup when searching for a specific word in CorpusIndex. I also decided to use document order and sequence as a tie breaker if two chunks have the sam TF-IDF score,so search results remain consistent. I also created fixed policy settings using ChunkingPolicy values that are set in the constructor so the chunking settings don't change unexpectedly while running.
 
-## 2. Design decisions
-Explain the principal data structures, interfaces, and ownership decisions in your implementation and why you selected them.
+To keep the system stable and prevent data corruption, ProcessingCore handles index updates using temporary varaibles during rebuild operations. When rebuild is called the new index and chunk lists are populated in temporary storage. If an error occurs, like encountering a duplicate id, the function throws an exception and aborts, leaving the existing core state intact. The program also validates unique document ids prior  to ingestion so the same file is not indexed twice.
 
-## 3. Correctness and consistency
-Identify the important invariants or failure cases your design must preserve and explain how your design addresses them.
+My tests cover core components like TextProcessor, ChunkingPolicy, Corpus Index, and RetrievalEngine. I tested TextProcessor to handle normalization edge cases like empty strings, extra whitespace and removing punctuation and verified ChunkingPolicy boundary limits. I also tested CorpusIndex and RetrievalEngine lookups across missing terms, single matches, and multi chunk matches to make sure relevancy ranking and tie breaking work correctly. I also checked that negative values throw invalid argument exceptions. I also added a multiple document integration test to make sure ProcessingCore::rebuild processes multiple documents properly and routes search queries to the right files.
 
-## 4. Testing strategy
-Explain what your tests cover and which risks or boundaries you considered most important.
-
-## 5. Alternatives considered
-Discuss at least two plausible design alternatives and why you did not choose them.
+I initially considered storing pointers inside the inverted index postings instead of chunk array indices. Using pointers avoids copying chunk data when returning search results, but it adds memory overhead and unneccesary complexity with ownership. Using vector indices was cleaner and easier to manage. I also considered updating the index in place during rebuild calls to reduce temporary memory usage. I ended up modifying the index in temporary variables first instead of updating it in place. If a document fails halfway through processing, the live index is left only partially updated and in a broken state. Rebuilding with temporary variables first allows the operation to safeuly abort and keeps the existing index intact.
