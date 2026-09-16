@@ -41,10 +41,13 @@ std::vector<Chunk> Chunker::chunk(const Document& document, std::size_t document
             std::size_t paragraph_split_idx=0; //search for latest paragraph boundary in window
             bool found_paragraph_boundary=false;
 
-            for (std::size_t i = max_end_idx; i > window_start_idx; i--){
+            for (std::size_t i = max_end_idx; i >= window_start_idx; --i){
                 if (i>start_token_idx && tokens[i-1].paragraph< tokens[i].paragraph){ //tokens index exceeds previous tokens, so boundary is created
                     paragraph_split_idx=i;
                     found_paragraph_boundary=true;
+                    break;
+                }
+                if(i==0){
                     break;
                 }
             }
